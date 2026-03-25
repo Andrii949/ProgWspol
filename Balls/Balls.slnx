@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="Data/Data.csproj" />
+  <Project Path="DataTest/DataTest.csproj" Id="65c5e188-1254-4517-ad29-c318cbbe0989" />
+  <Project Path="Logic/Logic.csproj" />
+  <Project Path="LogicTest/LogicTest.csproj" />
+  <Project Path="Model/Model.csproj" />
+  <Project Path="View/View.csproj" />
+  <Project Path="ViewModel/ViewModel.csproj" />
+</Solution>
