@@ -9,7 +9,12 @@ namespace DataTest
         public void DataClass_created_successfully()
         {
             DataClass data = new DataClass();
-                Assert.IsNotNull(data);
+
+            data.X = 5;
+            data.Y = 10;
+
+            Assert.AreEqual(5, data.X);
+            Assert.AreEqual(10, data.Y);
         }
     }
 }

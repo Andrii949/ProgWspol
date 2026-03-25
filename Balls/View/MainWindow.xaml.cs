@@ -9,6 +9,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Logic;
+using Data;
 
 namespace View
 {
@@ -20,11 +21,20 @@ namespace View
         public MainWindow()
         {
             InitializeComponent();
-
+          
             LogicClass logic = new LogicClass();
+            var balls = logic.CreateBalls();
+
+            StringBuilder sb = new StringBuilder();
+
+            foreach (var ball in balls)
+            {
+                sb.AppendLine($"Ball: X={ball.X}, Y={ball.Y}");
+            }
+
             string result = logic.SayHi("Jan Kowalski");
 
-            HelloTextBlock.Text = result;
+            HelloTextBlock.Text = sb.ToString();
 
 
         }
