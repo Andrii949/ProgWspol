@@ -1,41 +1,48 @@
-
 using System;
 using System.ComponentModel;
 
 namespace ConcurrentProgramming.Presentation.Model
 {
-  public interface IBall : INotifyPropertyChanged
-  {
-    double Top { get; }
-    double Left { get; }
-    double Diameter { get; }
-  }
-
-  public abstract class ModelAbstractApi : IObservable<IBall>, IDisposable
-  {
-    public static ModelAbstractApi CreateModel()
+    public interface IBall : INotifyPropertyChanged
     {
-      return modelInstance.Value;
+        double Top { get; }
+        double Left { get; }
+        double Diameter { get; }
     }
 
-    public abstract void Start(int numberOfBalls);
+    public abstract class ModelAbstractApi : IObservable<IBall>, IDisposable
+    {
+        public static ModelAbstractApi CreateModel()
+        {
+            return modelInstance.Value;
+        }
 
-    #region IObservable
+        public abstract double BoardHeight { get; }
 
-    public abstract IDisposable Subscribe(IObserver<IBall> observer);
+        public abstract double BoardWidth { get; }
 
-    #endregion IObservable
+        public abstract void Start(int numberOfBalls);
 
-    #region IDisposable
+        public abstract void Stop();
 
-    public abstract void Dispose();
+        public abstract void SetDrawingArea(double drawingAreaWidth, double drawingAreaHeight);
 
-    #endregion IDisposable
+        #region IObservable 
 
-    #region private
+        public abstract IDisposable Subscribe(IObserver<IBall> observer);
 
-    private static Lazy<ModelAbstractApi> modelInstance = new Lazy<ModelAbstractApi>(() => new ModelImplementation());
+        #endregion IObservable 
 
-    #endregion private
-  }
+        #region IDisposable 
+
+        public abstract void Dispose();
+
+        #endregion IDisposable 
+
+        #region private 
+
+        private static Lazy<ModelAbstractApi> modelInstance = new Lazy<ModelAbstractApi>(() => new ModelImplementation());
+
+        #endregion private 
+    }
 }
