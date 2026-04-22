@@ -19,7 +19,7 @@ namespace ConcurrentProgramming.BusinessLogic.Test
     [TestMethod]
     public void GetDimensionsTestMethod()
     {
-      Assert.AreEqual<Dimensions>(new(10.0, 10.0, 10.0), BusinessLogicAbstractAPI.GetDimensions);
+      Assert.AreEqual<Dimensions>(new(20.0, 420.0, 700.0), BusinessLogicAbstractAPI.GetDimensions);
     }
   }
 }

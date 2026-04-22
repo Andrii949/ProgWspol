@@ -25,6 +25,8 @@ namespace ConcurrentProgramming.Presentation.ViewModel.Test
       {
         Random random = new Random();
         int numberOfBalls = random.Next(1, 10);
+        Assert.AreEqual(820.0, viewModel.BoardWidth, 0.001);
+        Assert.AreEqual(492.0, viewModel.BoardHeight, 0.001);
         viewModel.Start(numberOfBalls);
         Assert.IsNotNull(viewModel.Balls);
         Assert.AreEqual<int>(0, nullModelFixture.Disposed);
@@ -66,6 +68,25 @@ namespace ConcurrentProgramming.Presentation.ViewModel.Test
       }
     }
 
+    [TestMethod]
+    public void StopCommandTestMethod()
+    {
+      ModelNullFixture model = new();
+
+      using (MainWindowViewModel viewModel = new(model))
+      {
+        viewModel.NumberOfBalls = 3;
+        viewModel.StartCommand.Execute(null);
+        ICommand stopCommand = viewModel.StopCommand;
+
+        Assert.IsTrue(stopCommand.CanExecute(null));
+        stopCommand.Execute(null);
+
+        Assert.AreEqual(1, model.Stopped);
+        Assert.IsFalse(viewModel.IsStarted);
+      }
+    }
+
     #region testing infrastructure
 
     private class ModelNullFixture : ModelAbstractApi
@@ -75,10 +96,15 @@ namespace ConcurrentProgramming.Presentation.ViewModel.Test
       internal int Disposed = 0;
       internal int Started = 0;
       internal int Subscribed = 0;
+      internal int Stopped = 0;
 
       #endregion Test
 
       #region ModelAbstractApi
+
+      public override double BoardHeight => 492.0;
+
+      public override double BoardWidth => 820.0;
 
       public override void Dispose()
       {
@@ -89,6 +115,14 @@ namespace ConcurrentProgramming.Presentation.ViewModel.Test
       {
         Started = numberOfBalls;
       }
+
+      public override void Stop()
+      {
+        Stopped++;
+      }
+
+      public override void SetDrawingArea(double drawingAreaWidth, double drawingAreaHeight)
+      { }
 
       public override IDisposable Subscribe(IObserver<ModelIBall> observer)
       {
@@ -114,6 +148,7 @@ namespace ConcurrentProgramming.Presentation.ViewModel.Test
       #region Testing indicators
 
       internal bool Disposed = false;
+      internal bool Stopped = false;
 
       #endregion Testing indicators
 
@@ -133,6 +168,10 @@ namespace ConcurrentProgramming.Presentation.ViewModel.Test
         return eventObservable?.Subscribe(x => observer.OnNext(x.EventArgs.Ball), ex => observer.OnError(ex), () => observer.OnCompleted());
       }
 
+      public override double BoardHeight => 492.0;
+
+      public override double BoardWidth => 820.0;
+
       public override void Start(int numberOfBalls)
       {
         for (int i = 0; i < numberOfBalls; i++)
@@ -146,6 +185,14 @@ namespace ConcurrentProgramming.Presentation.ViewModel.Test
       {
         Disposed = true;
       }
+
+      public override void Stop()
+      {
+        Stopped = true;
+      }
+
+      public override void SetDrawingArea(double drawingAreaWidth, double drawingAreaHeight)
+      { }
 
       #endregion ModelAbstractApi
 

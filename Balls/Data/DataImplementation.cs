@@ -19,8 +19,7 @@ namespace ConcurrentProgramming.Data
 
     public override void Start(int numberOfBalls, Action<IVector, IBall> upperLayerHandler)
     {
-      if (Disposed)
-        throw new ObjectDisposedException(nameof(DataImplementation));
+      ThrowIfDisposed();
       if (numberOfBalls < 0)
         throw new ArgumentOutOfRangeException(nameof(numberOfBalls));
       if (upperLayerHandler == null)
@@ -28,7 +27,7 @@ namespace ConcurrentProgramming.Data
 
       lock (BallsLock)
       {
-        BallsList.Clear();
+        ClearBalls();
         for (int i = 0; i < numberOfBalls; i++)
         {
           Vector startingPosition = new(
@@ -39,6 +38,16 @@ namespace ConcurrentProgramming.Data
           BallsList.Add(newBall);
           upperLayerHandler(startingPosition, newBall);
         }
+      }
+    }
+
+    public override void Stop()
+    {
+      ThrowIfDisposed();
+
+      lock (BallsLock)
+      {
+        ClearBalls();
       }
     }
 
@@ -53,7 +62,7 @@ namespace ConcurrentProgramming.Data
         if (disposing)
         {
           MoveTimer.Dispose();
-          BallsList.Clear();
+          ClearBalls();
         }
         Disposed = true;
       }
@@ -81,6 +90,17 @@ namespace ConcurrentProgramming.Data
     internal const double BallDiameter = 20.0;
     internal const double TableHeight = 420.0;
     internal const double TableWidth = 700.0;
+
+    private void ClearBalls()
+    {
+      BallsList.Clear();
+    }
+
+    private void ThrowIfDisposed()
+    {
+      if (Disposed)
+        throw new ObjectDisposedException(nameof(DataImplementation));
+    }
 
     private void Move(object? x)
     {

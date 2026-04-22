@@ -11,6 +11,9 @@ namespace ConcurrentProgramming.Presentation.ViewModel
 {
   public class MainWindowViewModel : ViewModelBase, IDisposable
   {
+    private const double InitialDrawingAreaWidth = 820.0;
+    private const double InitialDrawingAreaHeight = 520.0;
+
     #region ctor
 
     public MainWindowViewModel() : this(null)
@@ -19,7 +22,9 @@ namespace ConcurrentProgramming.Presentation.ViewModel
     internal MainWindowViewModel(ModelAbstractApi modelLayerAPI)
     {
       ModelLayer = modelLayerAPI == null ? ModelAbstractApi.CreateModel() : modelLayerAPI;
+      ModelLayer.SetDrawingArea(InitialDrawingAreaWidth, InitialDrawingAreaHeight);
       StartCommand = new RelayCommand(StartRequested, CanStart);
+      StopCommand = new RelayCommand(StopRequested, CanStop);
       Observer = ModelLayer.Subscribe<ModelIBall>(x => Balls.Add(x));
       NumberOfBalls = 5;
     }
@@ -32,6 +37,8 @@ namespace ConcurrentProgramming.Presentation.ViewModel
     {
       if (Disposed)
         throw new ObjectDisposedException(nameof(MainWindowViewModel));
+      if (numberOfBalls <= 0)
+        throw new ArgumentOutOfRangeException(nameof(numberOfBalls));
       if (Started)
         return;
 
@@ -40,13 +47,30 @@ namespace ConcurrentProgramming.Presentation.ViewModel
       Started = true;
       RaisePropertyChanged(nameof(IsStarted));
       StartRelayCommand.RaiseCanExecuteChanged();
+      StopRelayCommand.RaiseCanExecuteChanged();
+    }
+
+    public void Stop()
+    {
+      if (Disposed)
+        throw new ObjectDisposedException(nameof(MainWindowViewModel));
+      if (!Started)
+        return;
+
+      ModelLayer.Stop();
+      Balls.Clear();
+      Started = false;
+      RaisePropertyChanged(nameof(IsStarted));
+      StartRelayCommand.RaiseCanExecuteChanged();
+      StopRelayCommand.RaiseCanExecuteChanged();
     }
 
     public ObservableCollection<ModelIBall> Balls { get; } = new ObservableCollection<ModelIBall>();
     public ICommand StartCommand { get; }
+    public ICommand StopCommand { get; }
 
-    public double BoardHeight => BusinessLogicAbstractAPI.GetDimensions.TableHeight;
-    public double BoardWidth => BusinessLogicAbstractAPI.GetDimensions.TableWidth;
+    public double BoardHeight => ModelLayer.BoardHeight;
+    public double BoardWidth => ModelLayer.BoardWidth;
 
     public bool IsStarted => Started;
 
@@ -73,6 +97,8 @@ namespace ConcurrentProgramming.Presentation.ViewModel
       {
         if (disposing)
         {
+          if (Started)
+            ModelLayer.Stop();
           Balls.Clear();
           Observer.Dispose();
           ModelLayer.Dispose();
@@ -101,15 +127,26 @@ namespace ConcurrentProgramming.Presentation.ViewModel
     private int NumberOfBallsBackingField;
 
     private RelayCommand StartRelayCommand => (RelayCommand)StartCommand;
+    private RelayCommand StopRelayCommand => (RelayCommand)StopCommand;
 
     private bool CanStart()
     {
       return !Disposed && !Started && NumberOfBalls > 0;
     }
 
+    private bool CanStop()
+    {
+      return !Disposed && Started;
+    }
+
     private void StartRequested()
     {
       Start(NumberOfBalls);
+    }
+
+    private void StopRequested()
+    {
+      Stop();
     }
 
     #endregion private

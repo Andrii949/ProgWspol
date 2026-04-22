@@ -58,11 +58,27 @@ namespace ConcurrentProgramming.BusinessLogic.Test
       }
     }
 
+    [TestMethod]
+    public void StopTestMethod()
+    {
+      DataLayerStopFixture dataLayerFixture = new();
+
+      using (BusinessLogicImplementation newInstance = new(dataLayerFixture))
+      {
+        newInstance.Stop();
+
+        Assert.IsTrue(dataLayerFixture.StopCalled);
+      }
+    }
+
     #region testing instrumentation
 
     private class DataLayerConstructorFixcure : Data.DataAbstractAPI
     {
       public override void Dispose()
+      { }
+
+      public override void Stop()
       { }
 
       public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
@@ -80,6 +96,9 @@ namespace ConcurrentProgramming.BusinessLogic.Test
         Disposed = true;
       }
 
+      public override void Stop()
+      { }
+
       public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
       {
         throw new NotImplementedException();
@@ -92,6 +111,9 @@ namespace ConcurrentProgramming.BusinessLogic.Test
       internal int NumberOfBallseCreated = -1;
 
       public override void Dispose()
+      { }
+
+      public override void Stop()
       { }
 
       public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
@@ -112,6 +134,24 @@ namespace ConcurrentProgramming.BusinessLogic.Test
         public IVector Velocity { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public event EventHandler<IVector>? NewPositionNotification = null;
+      }
+    }
+
+    private class DataLayerStopFixture : Data.DataAbstractAPI
+    {
+      internal bool StopCalled = false;
+
+      public override void Dispose()
+      { }
+
+      public override void Stop()
+      {
+        StopCalled = true;
+      }
+
+      public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
+      {
+        throw new NotImplementedException();
       }
     }
 

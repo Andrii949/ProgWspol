@@ -9,11 +9,12 @@ namespace ConcurrentProgramming.Presentation.Model
 {
   internal class ModelBall : IBall
   {
-    public ModelBall(double top, double left, double diameter, LogicIBall underneathBall)
+    public ModelBall(double top, double left, double diameter, LogicIBall underneathBall, double scaleFactor = 1.0)
     {
-      TopBackingField = top;
-      LeftBackingField = left;
-      Diameter = diameter;
+      rawTop = top;
+      rawLeft = left;
+      rawDiameter = diameter;
+      ApplyScale(scaleFactor);
       underneathBall.NewPositionNotification += NewPositionNotification;
     }
 
@@ -43,7 +44,17 @@ namespace ConcurrentProgramming.Presentation.Model
       }
     }
 
-    public double Diameter { get; }
+    public double Diameter
+    {
+      get { return DiameterBackingField; }
+      private set
+      {
+        if (DiameterBackingField == value)
+          return;
+        DiameterBackingField = value;
+        RaisePropertyChanged();
+      }
+    }
 
     #region INotifyPropertyChanged
 
@@ -57,10 +68,30 @@ namespace ConcurrentProgramming.Presentation.Model
 
     private double TopBackingField;
     private double LeftBackingField;
+    private double DiameterBackingField;
+    private double currentScaleFactor = 1.0;
+    private double rawTop;
+    private double rawLeft;
+    private double rawDiameter;
 
     private void NewPositionNotification(object sender, IPosition e)
     {
-      Top = e.y; Left = e.x;
+      rawTop = e.y;
+      rawLeft = e.x;
+      ApplyScale(currentScaleFactor);
+    }
+
+    internal void Rescale(double scaleFactor)
+    {
+      ApplyScale(scaleFactor);
+    }
+
+    private void ApplyScale(double scaleFactor)
+    {
+      currentScaleFactor = scaleFactor;
+      Top = rawTop * scaleFactor;
+      Left = rawLeft * scaleFactor;
+      Diameter = rawDiameter * scaleFactor;
     }
 
     private void RaisePropertyChanged([CallerMemberName] string propertyName = "")
@@ -74,11 +105,17 @@ namespace ConcurrentProgramming.Presentation.Model
 
     [Conditional("DEBUG")]
     internal void SetLeft(double x)
-    { Left = x; }
+    {
+      rawLeft = x;
+      ApplyScale(currentScaleFactor);
+    }
 
     [Conditional("DEBUG")]
     internal void SettTop(double x)
-    { Top = x; }
+    {
+      rawTop = x;
+      ApplyScale(currentScaleFactor);
+    }
 
     #endregion testing instrumentation
   }

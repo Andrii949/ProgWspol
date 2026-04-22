@@ -5,7 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:ConcurrentProgramming.Presentation.ViewModel;assembly=ConcurrentProgramming.PresentationViewModel"
         mc:Ignorable="d"
-        Title="Billiard Table" Height="560" Width="860" ResizeMode="NoResize">
+        Title="Billiard Table"
+        Width="980"
+        Height="720"
+        MinWidth="760"
+        MinHeight="560"
+        WindowStartupLocation="CenterScreen">
     <Window.DataContext>
         <vm:MainWindowViewModel />
     </Window.DataContext>
@@ -19,43 +24,51 @@
         <StackPanel Orientation="Horizontal">
             <TextBlock VerticalAlignment="Center" Margin="0,0,8,0" Text="Liczba kul:" />
             <TextBox Width="80"
-                     VerticalContentAlignment="Center"
-                     Text="{Binding NumberOfBalls, UpdateSourceTrigger=PropertyChanged}" />
+                      VerticalContentAlignment="Center"
+                      Text="{Binding NumberOfBalls, UpdateSourceTrigger=PropertyChanged}" />
             <Button Margin="12,0,0,0"
                     Padding="16,6"
                     Command="{Binding StartCommand}"
                     Content="Start" />
+            <Button Margin="12,0,0,0"
+                    Padding="16,6"
+                    Command="{Binding StopCommand}"
+                    Content="Stop" />
             <TextBlock Margin="16,0,0,0"
                        VerticalAlignment="Center"
                        Text="{Binding IsStarted, StringFormat=Uruchomiono: {0}}" />
         </StackPanel>
 
-        <Border Grid.Row="2"
-                Width="{Binding BoardWidth}"
-                Height="{Binding BoardHeight}"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                BorderThickness="4"
-                BorderBrush="DarkGreen"
-                Background="Beige">
-            <ItemsControl ItemsSource="{Binding Balls}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <Canvas />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Ellipse Width="{Binding Diameter}" Height="{Binding Diameter}" Fill="SteelBlue" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-                <ItemsControl.ItemContainerStyle>
-                    <Style TargetType="ContentPresenter">
-                        <Setter Property="Canvas.Top" Value="{Binding Top}" />
-                        <Setter Property="Canvas.Left" Value="{Binding Left}" />
-                    </Style>
-                </ItemsControl.ItemContainerStyle>
-            </ItemsControl>
-        </Border>
+        <Viewbox Grid.Row="2"
+                 HorizontalAlignment="Stretch"
+                 VerticalAlignment="Stretch"
+                 Stretch="Uniform">
+            <Border Width="{Binding BoardWidth}"
+                    Height="{Binding BoardHeight}"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    BorderThickness="4"
+                    BorderBrush="DarkGreen"
+                    Background="Beige">
+                <ItemsControl ItemsSource="{Binding Balls}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Ellipse Width="{Binding Diameter}" Height="{Binding Diameter}" Fill="SteelBlue" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Top" Value="{Binding Top}" />
+                            <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                </ItemsControl>
+            </Border>
+        </Viewbox>
     </Grid>
 </Window>

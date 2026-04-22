@@ -41,6 +41,14 @@ namespace ConcurrentProgramming.BusinessLogic
         (startingPosition, databall) => upperLayerHandler(new Position(startingPosition.x, startingPosition.y), new Ball(databall)));
     }
 
+    public override void Stop()
+    {
+      if (Disposed)
+        throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
+
+      layerBellow.Stop();
+    }
+
     #endregion BusinessLogicAbstractAPI
 
     #region private

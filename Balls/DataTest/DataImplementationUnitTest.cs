@@ -58,5 +58,19 @@ namespace ConcurrentProgramming.Data.Test
         newInstance.CheckNumberOfBalls(x => Assert.AreEqual<int>(10, x));
       }
     }
+
+    [TestMethod]
+    public void StopTestMethod()
+    {
+      using (DataImplementation newInstance = new DataImplementation())
+      {
+        newInstance.Start(5, (startingPosition, ball) => { });
+        newInstance.CheckNumberOfBalls(x => Assert.AreEqual(5, x));
+
+        newInstance.Stop();
+
+        newInstance.CheckNumberOfBalls(x => Assert.AreEqual(0, x));
+      }
+    }
   }
 }

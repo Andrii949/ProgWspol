@@ -18,7 +18,15 @@ namespace ConcurrentProgramming.Presentation.Model
       return modelInstance.Value;
     }
 
+    public abstract double BoardHeight { get; }
+
+    public abstract double BoardWidth { get; }
+
     public abstract void Start(int numberOfBalls);
+
+    public abstract void Stop();
+
+    public abstract void SetDrawingArea(double drawingAreaWidth, double drawingAreaHeight);
 
     #region IObservable
 

@@ -16,6 +16,8 @@ namespace ConcurrentProgramming.Data
 
     public abstract void Start(int numberOfBalls, Action<IVector, IBall> upperLayerHandler);
 
+    public abstract void Stop();
+
     #endregion public API
 
     #region IDisposable

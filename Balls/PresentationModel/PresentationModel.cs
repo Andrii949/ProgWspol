@@ -1,5 +1,6 @@
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -16,14 +17,21 @@ namespace ConcurrentProgramming.Presentation.Model
     {
       layerBellow = underneathLayer == null ? UnderneathLayerAPI.GetBusinessLogicLayer() : underneathLayer;
       eventObservable = Observable.FromEventPattern<BallChaneEventArgs>(this, "BallChanged");
+      boardWidth = UnderneathLayerAPI.GetDimensions.TableWidth;
+      boardHeight = UnderneathLayerAPI.GetDimensions.TableHeight;
     }
 
     #region ModelAbstractApi
+
+    public override double BoardHeight => boardHeight;
+
+    public override double BoardWidth => boardWidth;
 
     public override void Dispose()
     {
       if (Disposed)
         throw new ObjectDisposedException(nameof(ModelImplementation));
+      trackedBalls.Clear();
       layerBellow.Dispose();
       Disposed = true;
     }
@@ -37,7 +45,34 @@ namespace ConcurrentProgramming.Presentation.Model
     {
       if (Disposed)
         throw new ObjectDisposedException(nameof(ModelImplementation));
+      trackedBalls.Clear();
       layerBellow.Start(numberOfBalls, StartHandler);
+    }
+
+    public override void Stop()
+    {
+      if (Disposed)
+        throw new ObjectDisposedException(nameof(ModelImplementation));
+
+      trackedBalls.Clear();
+      layerBellow.Stop();
+    }
+
+    public override void SetDrawingArea(double drawingAreaWidth, double drawingAreaHeight)
+    {
+      if (Disposed)
+        throw new ObjectDisposedException(nameof(ModelImplementation));
+      if (drawingAreaWidth <= 0 || drawingAreaHeight <= 0)
+        return;
+
+      double horizontalScale = drawingAreaWidth / UnderneathLayerAPI.GetDimensions.TableWidth;
+      double verticalScale = drawingAreaHeight / UnderneathLayerAPI.GetDimensions.TableHeight;
+      scaleFactor = Math.Min(horizontalScale, verticalScale);
+      boardWidth = UnderneathLayerAPI.GetDimensions.TableWidth * scaleFactor;
+      boardHeight = UnderneathLayerAPI.GetDimensions.TableHeight * scaleFactor;
+
+      foreach (ModelBall ball in trackedBalls)
+        ball.Rescale(scaleFactor);
     }
 
     #endregion ModelAbstractApi
@@ -51,12 +86,17 @@ namespace ConcurrentProgramming.Presentation.Model
     #region private
 
     private bool Disposed = false;
+    private double boardHeight;
+    private double boardWidth;
+    private double scaleFactor = 1.0;
     private readonly IObservable<EventPattern<BallChaneEventArgs>> eventObservable = null;
     private readonly UnderneathLayerAPI layerBellow = null;
+    private readonly List<ModelBall> trackedBalls = [];
 
     private void StartHandler(BusinessLogic.IPosition position, BusinessLogic.IBall ball)
     {
-      ModelBall newBall = new ModelBall(position.y, position.x, UnderneathLayerAPI.GetDimensions.BallDimension, ball);
+      ModelBall newBall = new ModelBall(position.y, position.x, UnderneathLayerAPI.GetDimensions.BallDimension, ball, scaleFactor);
+      trackedBalls.Add(newBall);
       BallChanged?.Invoke(this, new BallChaneEventArgs() { Ball = newBall });
     }
 
