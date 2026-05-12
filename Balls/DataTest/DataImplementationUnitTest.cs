@@ -53,6 +53,8 @@ namespace ConcurrentProgramming.Data.Test
                       Assert.IsTrue(startingPosition.x <= DataImplementation.TableWidth - DataImplementation.BallDiameter);
                       Assert.IsTrue(startingPosition.y <= DataImplementation.TableHeight - DataImplementation.BallDiameter);
                       Assert.IsNotNull(ball);
+                      Assert.AreEqual(DataImplementation.BallDiameter, ball.Diameter);
+                      Assert.AreEqual(DataImplementation.BallMass, ball.Mass);
                   });
                 Assert.AreEqual<int>(numberOfBalls2Create, numberOfCallbackInvoked);
                 newInstance.CheckNumberOfBalls(x => Assert.AreEqual<int>(10, x));
@@ -72,5 +74,25 @@ namespace ConcurrentProgramming.Data.Test
                 newInstance.CheckNumberOfBalls(x => Assert.AreEqual(0, x));
             }
         }
+
+        [TestMethod]
+        public void MoveAcceptsAnyVectorImplementationAsVelocityTestMethod()
+        {
+            using (DataImplementation newInstance = new DataImplementation())
+            {
+                newInstance.Start(
+                  1,
+                  (startingPosition, ball) =>
+                  {
+                      ball.Velocity = new ExternalVector(1.0, 1.0);
+                  });
+
+                typeof(DataImplementation)
+                  .GetMethod("Move", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                  ?.Invoke(newInstance, new object?[] { null });
+            }
+        }
+
+        private sealed record ExternalVector(double x, double y) : IVector;
     }
 }

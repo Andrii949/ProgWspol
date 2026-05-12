@@ -70,6 +70,42 @@ namespace ConcurrentProgramming.BusinessLogic.Test
             }
         }
 
+        [TestMethod]
+        public void ElasticCollisionEqualMassHeadOnTestMethod()
+        {
+            CollisionBallFixture first = new(new CollisionVectorFixture { x = 100.0, y = 100.0 }, new CollisionVectorFixture { x = 2.0, y = 0.0 }, 20.0, 1.0);
+            CollisionBallFixture second = new(new CollisionVectorFixture { x = 118.0, y = 100.0 }, new CollisionVectorFixture { x = -2.0, y = 0.0 }, 20.0, 1.0);
+
+            BusinessLogicImplementation.ResolveCollision(first, second);
+
+            Assert.AreEqual(-2.0, first.Velocity.x, 0.001);
+            Assert.AreEqual(2.0, second.Velocity.x, 0.001);
+        }
+
+        [TestMethod]
+        public void ElasticCollisionDifferentMassesTestMethod()
+        {
+            CollisionBallFixture first = new(new CollisionVectorFixture { x = 100.0, y = 100.0 }, new CollisionVectorFixture { x = 3.0, y = 0.0 }, 20.0, 2.0);
+            CollisionBallFixture second = new(new CollisionVectorFixture { x = 118.0, y = 100.0 }, new CollisionVectorFixture { x = 0.0, y = 0.0 }, 20.0, 1.0);
+
+            BusinessLogicImplementation.ResolveCollision(first, second);
+
+            Assert.AreEqual(1.0, first.Velocity.x, 0.001);
+            Assert.AreEqual(4.0, second.Velocity.x, 0.001);
+        }
+
+        [TestMethod]
+        public void ElasticCollisionSeparatedBallsLeaveVelocityUnchangedTestMethod()
+        {
+            CollisionBallFixture first = new(new CollisionVectorFixture { x = 100.0, y = 100.0 }, new CollisionVectorFixture { x = 3.0, y = 0.0 }, 20.0, 2.0);
+            CollisionBallFixture second = new(new CollisionVectorFixture { x = 200.0, y = 100.0 }, new CollisionVectorFixture { x = 0.0, y = 0.0 }, 20.0, 1.0);
+
+            BusinessLogicImplementation.ResolveCollision(first, second);
+
+            Assert.AreEqual(3.0, first.Velocity.x, 0.001);
+            Assert.AreEqual(0.0, second.Velocity.x, 0.001);
+        }
+
         #region testing instrumentation
 
         private class DataLayerConstructorFixcure : Data.DataAbstractAPI
@@ -130,9 +166,24 @@ namespace ConcurrentProgramming.BusinessLogic.Test
 
             private class DataBallFixture : Data.IBall
             {
-                public IVector Velocity { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+                public DataBallFixture()
+                  : this(new DataVectorFixture(), new DataVectorFixture(), 20.0, 1.0)
+                { }
 
-public event EventHandler<IVector>? NewPositionNotification = null;
+                public DataBallFixture(IVector position, IVector velocity, double diameter, double mass)
+                {
+                    Position = position;
+                    Velocity = velocity;
+                    Diameter = diameter;
+                    Mass = mass;
+                }
+
+                public IVector Position { get; set; }
+                public IVector Velocity { get; set; }
+                public double Diameter { get; }
+                public double Mass { get; }
+
+                public event EventHandler<IVector>? NewPositionNotification = null;
             }
         }
 
@@ -152,6 +203,29 @@ public event EventHandler<IVector>? NewPositionNotification = null;
             {
                 throw new NotImplementedException();
             }
+        }
+
+        private record CollisionVectorFixture : Data.IVector
+        {
+            public double x { get; init; }
+            public double y { get; init; }
+        }
+
+        private class CollisionBallFixture : Data.IBall
+        {
+            public CollisionBallFixture(IVector position, IVector velocity, double diameter, double mass)
+            {
+                Position = position;
+                Velocity = velocity;
+                Diameter = diameter;
+                Mass = mass;
+            }
+
+            public IVector Position { get; set; }
+            public IVector Velocity { get; set; }
+            public double Diameter { get; }
+            public double Mass { get; }
+            public event EventHandler<IVector>? NewPositionNotification = null;
         }
 
         #endregion testing instrumentation

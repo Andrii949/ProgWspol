@@ -23,6 +23,10 @@ namespace ConcurrentProgramming.BusinessLogic
         {
             if (Disposed)
                 throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
+            lock (TrackedBallsLock)
+            {
+                TrackedBalls.Clear();
+            }
             layerBellow.Dispose();
             Disposed = true;
         }
@@ -35,9 +39,21 @@ namespace ConcurrentProgramming.BusinessLogic
                 throw new ArgumentOutOfRangeException(nameof(numberOfBalls));
             if (upperLayerHandler == null)
                 throw new ArgumentNullException(nameof(upperLayerHandler));
+            lock (TrackedBallsLock)
+            {
+                TrackedBalls.Clear();
+            }
             layerBellow.Start(
               numberOfBalls,
-              (startingPosition, databall) => upperLayerHandler(new Position(startingPosition.x, startingPosition.y), new Ball(databall)));
+              (startingPosition, databall) =>
+              {
+                  lock (TrackedBallsLock)
+                  {
+                      TrackedBalls.Add(databall);
+                  }
+                  databall.NewPositionNotification += HandleBallPositionChanged;
+                  upperLayerHandler(new Position(startingPosition.x, startingPosition.y), new Ball(databall));
+              });
         }
 
         public override void Stop()
@@ -45,6 +61,10 @@ namespace ConcurrentProgramming.BusinessLogic
             if (Disposed)
                 throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
 
+            lock (TrackedBallsLock)
+            {
+                TrackedBalls.Clear();
+            }
             layerBellow.Stop();
         }
 
@@ -55,6 +75,67 @@ namespace ConcurrentProgramming.BusinessLogic
         private bool Disposed = false;
 
         private readonly UnderneathLayerAPI layerBellow;
+        private readonly object TrackedBallsLock = new();
+        private readonly List<Data.IBall> TrackedBalls = [];
+
+        private void HandleBallPositionChanged(object? sender, Data.IVector position)
+        {
+            lock (TrackedBallsLock)
+            {
+                for (int i = 0; i < TrackedBalls.Count; i++)
+                {
+                    for (int j = i + 1; j < TrackedBalls.Count; j++)
+                    {
+                        ResolveCollision(TrackedBalls[i], TrackedBalls[j]);
+                    }
+                }
+            }
+        }
+
+        internal static void ResolveCollision(Data.IBall first, Data.IBall second)
+        {
+            double firstCenterX = first.Position.x + first.Diameter / 2.0;
+            double firstCenterY = first.Position.y + first.Diameter / 2.0;
+            double secondCenterX = second.Position.x + second.Diameter / 2.0;
+            double secondCenterY = second.Position.y + second.Diameter / 2.0;
+
+            double dx = secondCenterX - firstCenterX;
+            double dy = secondCenterY - firstCenterY;
+            double distanceSquared = dx * dx + dy * dy;
+            double minimumDistance = (first.Diameter + second.Diameter) / 2.0;
+            double minimumDistanceSquared = minimumDistance * minimumDistance;
+
+            if (distanceSquared > minimumDistanceSquared || distanceSquared == 0.0)
+                return;
+
+            double distance = Math.Sqrt(distanceSquared);
+            double normalX = dx / distance;
+            double normalY = dy / distance;
+
+            double firstVelocityNormal = first.Velocity.x * normalX + first.Velocity.y * normalY;
+            double secondVelocityNormal = second.Velocity.x * normalX + second.Velocity.y * normalY;
+
+            double firstVelocityTangentX = first.Velocity.x - firstVelocityNormal * normalX;
+            double firstVelocityTangentY = first.Velocity.y - firstVelocityNormal * normalY;
+            double secondVelocityTangentX = second.Velocity.x - secondVelocityNormal * normalX;
+            double secondVelocityTangentY = second.Velocity.y - secondVelocityNormal * normalY;
+
+            double firstUpdatedNormal =
+                (firstVelocityNormal * (first.Mass - second.Mass) + 2.0 * second.Mass * secondVelocityNormal)
+                / (first.Mass + second.Mass);
+            double secondUpdatedNormal =
+                (secondVelocityNormal * (second.Mass - first.Mass) + 2.0 * first.Mass * firstVelocityNormal)
+                / (first.Mass + second.Mass);
+
+            first.Velocity = new LogicVector(
+                firstVelocityTangentX + firstUpdatedNormal * normalX,
+                firstVelocityTangentY + firstUpdatedNormal * normalY);
+            second.Velocity = new LogicVector(
+                secondVelocityTangentX + secondUpdatedNormal * normalX,
+                secondVelocityTangentY + secondUpdatedNormal * normalY);
+        }
+
+        private sealed record LogicVector(double x, double y) : Data.IVector;
 
         #endregion private 
 

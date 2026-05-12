@@ -5,10 +5,12 @@ namespace ConcurrentProgramming.Data
   {
     #region ctor
 
-    internal Ball(Vector initialPosition, Vector initialVelocity)
+    internal Ball(Vector initialPosition, Vector initialVelocity, double diameter, double mass)
     {
-      Position = initialPosition;
+      PositionBackingField = initialPosition;
       Velocity = initialVelocity;
+      Diameter = diameter;
+      Mass = mass;
     }
 
     #endregion ctor
@@ -17,13 +19,21 @@ namespace ConcurrentProgramming.Data
 
     public event EventHandler<IVector>? NewPositionNotification;
 
+    public IVector Position
+    {
+      get => PositionBackingField;
+      set => PositionBackingField = value;
+    }
+
     public IVector Velocity { get; set; }
+    public double Diameter { get; }
+    public double Mass { get; }
 
     #endregion IBall
 
     #region private
 
-    internal Vector Position { get; private set; }
+    private IVector PositionBackingField;
 
     private void RaiseNewPositionChangeNotification()
     {
@@ -32,7 +42,7 @@ namespace ConcurrentProgramming.Data
 
     internal void Move(Vector newPosition, Vector newVelocity)
     {
-      Position = newPosition;
+      PositionBackingField = newPosition;
       Velocity = newVelocity;
       RaiseNewPositionChangeNotification();
     }

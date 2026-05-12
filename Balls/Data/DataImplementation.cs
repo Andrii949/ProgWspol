@@ -34,7 +34,7 @@ namespace ConcurrentProgramming.Data
                       RandomGenerator.NextDouble() * (TableWidth - BallDiameter),
                       RandomGenerator.NextDouble() * (TableHeight - BallDiameter));
                     Vector initialVelocity = CreateVelocity();
-                    Ball newBall = new(startingPosition, initialVelocity);
+                    Ball newBall = new(startingPosition, initialVelocity, BallDiameter, BallMass);
                     BallsList.Add(newBall);
                     upperLayerHandler(startingPosition, newBall);
                 }
@@ -62,7 +62,10 @@ namespace ConcurrentProgramming.Data
                 if (disposing)
                 {
                     MoveTimer.Dispose();
-                    ClearBalls();
+                    lock (BallsLock)
+                    {
+                        ClearBalls();
+                    }
                 }
                 Disposed = true;
             }
@@ -88,6 +91,7 @@ namespace ConcurrentProgramming.Data
         private readonly List<Ball> BallsList = [];
 
         internal const double BallDiameter = 20.0;
+        internal const double BallMass = 1.0;
         internal const double TableHeight = 420.0;
         internal const double TableWidth = 700.0;
 
@@ -108,7 +112,7 @@ namespace ConcurrentProgramming.Data
             {
                 foreach (Ball item in BallsList)
                 {
-                    Vector velocity = (Vector)item.Velocity;
+                    IVector velocity = item.Velocity;
                     double nextX = item.Position.x + velocity.x;
                     double nextY = item.Position.y + velocity.y;
                     double correctedVelocityX = velocity.x;
@@ -152,13 +156,19 @@ namespace ConcurrentProgramming.Data
         [Conditional("DEBUG")]
         internal void CheckBallsList(Action<IEnumerable<IBall>> returnBallsList)
         {
-            returnBallsList(BallsList);
+            lock (BallsLock)
+            {
+                returnBallsList(BallsList.Cast<IBall>().ToArray());
+            }
         }
 
         [Conditional("DEBUG")]
         internal void CheckNumberOfBalls(Action<int> returnNumberOfBalls)
         {
-            returnNumberOfBalls(BallsList.Count);
+            lock (BallsLock)
+            {
+                returnNumberOfBalls(BallsList.Count);
+            }
         }
 
         [Conditional("DEBUG")]
