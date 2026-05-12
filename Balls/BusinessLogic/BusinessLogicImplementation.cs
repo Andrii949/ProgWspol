@@ -111,9 +111,27 @@ namespace ConcurrentProgramming.BusinessLogic
             double distance = Math.Sqrt(distanceSquared);
             double normalX = dx / distance;
             double normalY = dy / distance;
+            double overlap = minimumDistance - distance;
+
+            if (overlap > 0.0)
+            {
+                double totalMass = first.Mass + second.Mass;
+                double firstCorrection = overlap * (second.Mass / totalMass);
+                double secondCorrection = overlap * (first.Mass / totalMass);
+
+                first.Position = new LogicVector(
+                    first.Position.x - normalX * firstCorrection,
+                    first.Position.y - normalY * firstCorrection);
+                second.Position = new LogicVector(
+                    second.Position.x + normalX * secondCorrection,
+                    second.Position.y + normalY * secondCorrection);
+            }
 
             double firstVelocityNormal = first.Velocity.x * normalX + first.Velocity.y * normalY;
             double secondVelocityNormal = second.Velocity.x * normalX + second.Velocity.y * normalY;
+
+            if (secondVelocityNormal - firstVelocityNormal >= 0.0)
+                return;
 
             double firstVelocityTangentX = first.Velocity.x - firstVelocityNormal * normalX;
             double firstVelocityTangentY = first.Velocity.y - firstVelocityNormal * normalY;
