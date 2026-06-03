@@ -5,7 +5,8 @@ namespace ConcurrentProgramming.BusinessLogic
   {
     public Ball(Data.IBall ball)
     {
-      ball.NewPositionNotification += RaisePositionChangeEvent;
+      UnderneathBall = ball;
+      UnderneathBall.NewPositionNotification += RaisePositionChangeEvent;
     }
 
     #region IBall
@@ -18,8 +19,10 @@ namespace ConcurrentProgramming.BusinessLogic
 
     private void RaisePositionChangeEvent(object? sender, Data.IVector e)
     {
-      NewPositionNotification?.Invoke(this, new Position(e.x, e.y));
+      NewPositionNotification?.Invoke(this, new Position(UnderneathBall.Position.x, UnderneathBall.Position.y));
     }
+
+    private readonly Data.IBall UnderneathBall;
 
     #endregion private
   }

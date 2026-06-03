@@ -106,6 +106,17 @@ namespace ConcurrentProgramming.BusinessLogic.Test
             Assert.AreEqual(0.0, second.Velocity.x, 0.001);
         }
 
+        [TestMethod]
+        public void WallCollisionIsResolvedByLogicLayerTestMethod()
+        {
+            CollisionBallFixture ball = new(new CollisionVectorFixture { x = -5.0, y = 100.0 }, new CollisionVectorFixture { x = -3.0, y = 0.0 }, 20.0, 1.0);
+
+            BusinessLogicImplementation.ResolveBoundaryCollision(ball, BusinessLogicAbstractAPI.GetDimensions);
+
+            Assert.AreEqual(0.0, ball.Position.x, 0.001);
+            Assert.AreEqual(3.0, ball.Velocity.x, 0.001);
+        }
+
         #region testing instrumentation
 
         private class DataLayerConstructorFixcure : Data.DataAbstractAPI
@@ -180,6 +191,7 @@ namespace ConcurrentProgramming.BusinessLogic.Test
 
                 public IVector Position { get; set; }
                 public IVector Velocity { get; set; }
+                public int Id => 0;
                 public double Diameter { get; }
                 public double Mass { get; }
 
@@ -223,6 +235,7 @@ namespace ConcurrentProgramming.BusinessLogic.Test
 
             public IVector Position { get; set; }
             public IVector Velocity { get; set; }
+            public int Id => 0;
             public double Diameter { get; }
             public double Mass { get; }
             public event EventHandler<IVector>? NewPositionNotification = null;

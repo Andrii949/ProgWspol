@@ -7,8 +7,9 @@ namespace ConcurrentProgramming.Data.Test
         public void ConstructorTestMethod()
         {
             Vector testinVector = new Vector(0.0, 0.0);
-            Ball newInstance = new(testinVector, testinVector, 20.0, 2.0);
+            Ball newInstance = new(1, testinVector, testinVector, 20.0, 2.0);
 
+            Assert.AreEqual(1, newInstance.Id);
             Assert.AreEqual(testinVector, newInstance.Position);
             Assert.AreEqual(testinVector, newInstance.Velocity);
             Assert.AreEqual(20.0, newInstance.Diameter);
@@ -19,7 +20,7 @@ namespace ConcurrentProgramming.Data.Test
         public void MoveTestMethod()
         {
             Vector initialPosition = new(10.0, 10.0);
-            Ball newInstance = new(initialPosition, new Vector(0.0, 0.0), 20.0, 2.0);
+            Ball newInstance = new(1, initialPosition, new Vector(0.0, 0.0), 20.0, 2.0);
             IVector curentPosition = new Vector(0.0, 0.0);
             int numberOfCallBackCalled = 0;
             newInstance.NewPositionNotification += (sender, position) => { Assert.IsNotNull(sender); curentPosition = position; numberOfCallBackCalled++; };

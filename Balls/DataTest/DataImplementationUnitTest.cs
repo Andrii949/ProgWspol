@@ -93,6 +93,155 @@ namespace ConcurrentProgramming.Data.Test
             }
         }
 
+        [TestMethod]
+        public void MoveUsesElapsedTimeToUpdatePositionTestMethod()
+        {
+            TestDiagnosticLogger logger = new();
+            using (DataImplementation newInstance = new DataImplementation(logger, new FixedElapsedTimeProvider(0.5), startTimer: false))
+            {
+                IBall? createdBall = null;
+                IVector? startingPosition = null;
+                newInstance.Start(
+                  1,
+                  (position, ball) =>
+                  {
+                      startingPosition = position;
+                      createdBall = ball;
+                      ball.Velocity = new ExternalVector(100.0, 0.0);
+                  });
+
+                InvokeMove(newInstance);
+
+                Assert.IsNotNull(createdBall);
+                Assert.IsNotNull(startingPosition);
+                Assert.AreEqual(startingPosition.x + 50.0, createdBall.Position.x, 0.001);
+                Assert.AreEqual(startingPosition.y, createdBall.Position.y, 0.001);
+            }
+        }
+
+        [TestMethod]
+        public void DiagnosticLoggerReceivesRecordWhenBallMovesTestMethod()
+        {
+            TestDiagnosticLogger logger = new();
+            using (DataImplementation newInstance = new DataImplementation(logger, new FixedElapsedTimeProvider(0.02), startTimer: false))
+            {
+                newInstance.Start(1, (position, ball) => { });
+
+                InvokeMove(newInstance);
+
+                Assert.AreEqual(1, logger.Records.Count);
+                Assert.AreEqual(0, logger.DroppedRecords);
+            }
+        }
+
+        [TestMethod]
+        public void FullDiagnosticLoggerDoesNotStopBallMovementTestMethod()
+        {
+            TestDiagnosticLogger logger = new() { AcceptRecords = false };
+            using (DataImplementation newInstance = new DataImplementation(logger, new FixedElapsedTimeProvider(1.0), startTimer: false))
+            {
+                IBall? createdBall = null;
+                IVector? startingPosition = null;
+                newInstance.Start(
+                  1,
+                  (position, ball) =>
+                  {
+                      startingPosition = position;
+                      createdBall = ball;
+                      ball.Velocity = new ExternalVector(10.0, 0.0);
+                  });
+
+                InvokeMove(newInstance);
+
+                Assert.IsNotNull(createdBall);
+                Assert.IsNotNull(startingPosition);
+                Assert.AreEqual(startingPosition.x + 10.0, createdBall.Position.x, 0.001);
+                Assert.AreEqual(1, logger.DroppedRecords);
+            }
+        }
+
+        [TestMethod]
+        public void DiagnosticRecordSerializesToAsciiTextTestMethod()
+        {
+            DiagnosticRecord record = new(1, 7, 10.5, 20.25, -3.0, 4.0);
+
+            string serialized = DiagnosticLogSerializer.Serialize(record);
+
+            Assert.IsTrue(serialized.All(character => character <= 127));
+            StringAssert.Contains(serialized, "7");
+            StringAssert.Contains(serialized, "10.500");
+        }
+
+        [TestMethod]
+        public void FileDiagnosticLoggerWritesAsciiTextFileTestMethod()
+        {
+            string filePath = Path.Combine(Path.GetTempPath(), $"balls-diagnostics-{Guid.NewGuid():N}.log");
+            try
+            {
+                using (FileDiagnosticLogger logger = new(filePath, capacity: 8))
+                {
+                    Assert.IsTrue(logger.TryLog(new DiagnosticRecord(1, 2, 3.0, 4.0, 5.0, 6.0)));
+                }
+
+                string content = File.ReadAllText(filePath, System.Text.Encoding.ASCII);
+
+                Assert.IsTrue(content.All(character => character <= 127));
+                StringAssert.Contains(content, "2;3.000;4.000;5.000;6.000");
+            }
+            finally
+            {
+                if (File.Exists(filePath))
+                    File.Delete(filePath);
+            }
+        }
+
+        private static void InvokeMove(DataImplementation instance)
+        {
+            typeof(DataImplementation)
+              .GetMethod("Move", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+              ?.Invoke(instance, new object?[] { null });
+        }
+
         private sealed record ExternalVector(double x, double y) : IVector;
+
+        private sealed class FixedElapsedTimeProvider : IElapsedTimeProvider
+        {
+            private readonly double elapsedSeconds;
+
+            internal FixedElapsedTimeProvider(double elapsedSeconds)
+            {
+                this.elapsedSeconds = elapsedSeconds;
+            }
+
+            public double GetElapsedSeconds()
+            {
+                return elapsedSeconds;
+            }
+
+            public void Reset()
+            { }
+        }
+
+        private sealed class TestDiagnosticLogger : IDiagnosticLogger
+        {
+            internal bool AcceptRecords = true;
+            internal List<DiagnosticRecord> Records { get; } = [];
+            public int DroppedRecords { get; private set; }
+
+            public bool TryLog(DiagnosticRecord record)
+            {
+                if (!AcceptRecords)
+                {
+                    DroppedRecords++;
+                    return false;
+                }
+
+                Records.Add(record);
+                return true;
+            }
+
+            public void Dispose()
+            { }
+        }
     }
 }

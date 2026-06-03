@@ -82,6 +82,9 @@ namespace ConcurrentProgramming.BusinessLogic
         {
             lock (TrackedBallsLock)
             {
+                foreach (Data.IBall ball in TrackedBalls)
+                    ResolveBoundaryCollision(ball, BusinessLogicAbstractAPI.GetDimensions);
+
                 for (int i = 0; i < TrackedBalls.Count; i++)
                 {
                     for (int j = i + 1; j < TrackedBalls.Count; j++)
@@ -90,6 +93,39 @@ namespace ConcurrentProgramming.BusinessLogic
                     }
                 }
             }
+        }
+
+        internal static void ResolveBoundaryCollision(Data.IBall ball, Dimensions dimensions)
+        {
+            double correctedX = ball.Position.x;
+            double correctedY = ball.Position.y;
+            double correctedVelocityX = ball.Velocity.x;
+            double correctedVelocityY = ball.Velocity.y;
+
+            if (correctedX <= 0.0)
+            {
+                correctedX = 0.0;
+                correctedVelocityX = Math.Abs(correctedVelocityX);
+            }
+            else if (correctedX >= dimensions.TableWidth - ball.Diameter)
+            {
+                correctedX = dimensions.TableWidth - ball.Diameter;
+                correctedVelocityX = -Math.Abs(correctedVelocityX);
+            }
+
+            if (correctedY <= 0.0)
+            {
+                correctedY = 0.0;
+                correctedVelocityY = Math.Abs(correctedVelocityY);
+            }
+            else if (correctedY >= dimensions.TableHeight - ball.Diameter)
+            {
+                correctedY = dimensions.TableHeight - ball.Diameter;
+                correctedVelocityY = -Math.Abs(correctedVelocityY);
+            }
+
+            ball.Position = new LogicVector(correctedX, correctedY);
+            ball.Velocity = new LogicVector(correctedVelocityX, correctedVelocityY);
         }
 
         internal static void ResolveCollision(Data.IBall first, Data.IBall second)
