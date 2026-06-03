@@ -43,14 +43,14 @@
                  HorizontalAlignment="Stretch"
                  VerticalAlignment="Stretch"
                  Stretch="Uniform">
-            <Border Width="{Binding BoardWidth}"
-                    Height="{Binding BoardHeight}"
-                    HorizontalAlignment="Left"
+            <Border HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     BorderThickness="4"
                     BorderBrush="DarkGreen"
                     Background="Beige">
-                <ItemsControl ItemsSource="{Binding Balls}">
+                <ItemsControl Width="{Binding BoardWidth}"
+                              Height="{Binding BoardHeight}"
+                              ItemsSource="{Binding Balls}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas />

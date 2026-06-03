@@ -9,8 +9,18 @@ namespace ConcurrentProgramming.Data
         #region ctor
 
         public DataImplementation()
+          : this(
+              new FileDiagnosticLogger(Path.Combine(AppContext.BaseDirectory, "ball-diagnostics.log")),
+              new StopwatchElapsedTimeProvider(),
+              startTimer: true)
+        { }
+
+        internal DataImplementation(IDiagnosticLogger diagnosticLogger, IElapsedTimeProvider elapsedTimeProvider, bool startTimer)
         {
-            MoveTimer = new Timer(Move, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(20));
+            DiagnosticLogger = diagnosticLogger ?? throw new ArgumentNullException(nameof(diagnosticLogger));
+            ElapsedTimeProvider = elapsedTimeProvider ?? throw new ArgumentNullException(nameof(elapsedTimeProvider));
+            if (startTimer)
+                MoveTimer = new Timer(Move, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(20));
         }
 
         #endregion ctor
@@ -28,13 +38,14 @@ namespace ConcurrentProgramming.Data
             lock (BallsLock)
             {
                 ClearBalls();
+                ElapsedTimeProvider.Reset();
                 for (int i = 0; i < numberOfBalls; i++)
                 {
                     Vector startingPosition = new(
                       RandomGenerator.NextDouble() * (TableWidth - BallDiameter),
                       RandomGenerator.NextDouble() * (TableHeight - BallDiameter));
                     Vector initialVelocity = CreateVelocity();
-                    Ball newBall = new(startingPosition, initialVelocity, BallDiameter, BallMass);
+                    Ball newBall = new(i, startingPosition, initialVelocity, BallDiameter, BallMass);
                     BallsList.Add(newBall);
                     upperLayerHandler(startingPosition, newBall);
                 }
@@ -61,11 +72,12 @@ namespace ConcurrentProgramming.Data
             {
                 if (disposing)
                 {
-                    MoveTimer.Dispose();
+                    MoveTimer?.Dispose();
                     lock (BallsLock)
                     {
                         ClearBalls();
                     }
+                    DiagnosticLogger.Dispose();
                 }
                 Disposed = true;
             }
@@ -85,10 +97,12 @@ namespace ConcurrentProgramming.Data
 
         private bool Disposed = false;
 
-        private readonly Timer MoveTimer;
+        private readonly Timer? MoveTimer;
         private readonly Random RandomGenerator = new();
         private readonly object BallsLock = new();
         private readonly List<Ball> BallsList = [];
+        private readonly IDiagnosticLogger DiagnosticLogger;
+        private readonly IElapsedTimeProvider ElapsedTimeProvider;
 
         internal const double BallDiameter = 20.0;
         internal const double BallMass = 1.0;
@@ -108,29 +122,26 @@ namespace ConcurrentProgramming.Data
 
         private void Move(object? x)
         {
+            double elapsedSeconds = ElapsedTimeProvider.GetElapsedSeconds();
+            if (elapsedSeconds <= 0.0)
+                return;
+
             lock (BallsLock)
             {
                 foreach (Ball item in BallsList)
                 {
                     IVector velocity = item.Velocity;
-                    double nextX = item.Position.x + velocity.x;
-                    double nextY = item.Position.y + velocity.y;
-                    double correctedVelocityX = velocity.x;
-                    double correctedVelocityY = velocity.y;
+                    double nextX = item.Position.x + velocity.x * elapsedSeconds;
+                    double nextY = item.Position.y + velocity.y * elapsedSeconds;
 
-                    if (nextX <= 0 || nextX >= TableWidth - BallDiameter)
-                    {
-                        correctedVelocityX = -correctedVelocityX;
-                        nextX = Math.Clamp(nextX, 0, TableWidth - BallDiameter);
-                    }
-
-                    if (nextY <= 0 || nextY >= TableHeight - BallDiameter)
-                    {
-                        correctedVelocityY = -correctedVelocityY;
-                        nextY = Math.Clamp(nextY, 0, TableHeight - BallDiameter);
-                    }
-
-                    item.Move(new Vector(nextX, nextY), new Vector(correctedVelocityX, correctedVelocityY));
+                    item.Move(new Vector(nextX, nextY), velocity);
+                    DiagnosticLogger.TryLog(new DiagnosticRecord(
+                      DateTime.UtcNow.Ticks,
+                      item.Id,
+                      item.Position.x,
+                      item.Position.y,
+                      item.Velocity.x,
+                      item.Velocity.y));
                 }
             }
         }
@@ -140,11 +151,11 @@ namespace ConcurrentProgramming.Data
             double componentX = 0;
             double componentY = 0;
 
-            while (Math.Abs(componentX) < 0.25)
-                componentX = (RandomGenerator.NextDouble() - 0.5) * 6.0;
+            while (Math.Abs(componentX) < 12.5)
+                componentX = (RandomGenerator.NextDouble() - 0.5) * 300.0;
 
-            while (Math.Abs(componentY) < 0.25)
-                componentY = (RandomGenerator.NextDouble() - 0.5) * 6.0;
+            while (Math.Abs(componentY) < 12.5)
+                componentY = (RandomGenerator.NextDouble() - 0.5) * 300.0;
 
             return new Vector(componentX, componentY);
         }

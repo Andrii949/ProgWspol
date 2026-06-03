@@ -5,8 +5,9 @@ namespace ConcurrentProgramming.Data
   {
     #region ctor
 
-    internal Ball(Vector initialPosition, Vector initialVelocity, double diameter, double mass)
+    internal Ball(int id, Vector initialPosition, Vector initialVelocity, double diameter, double mass)
     {
+      Id = id;
       PositionBackingField = initialPosition;
       Velocity = initialVelocity;
       Diameter = diameter;
@@ -26,6 +27,7 @@ namespace ConcurrentProgramming.Data
     }
 
     public IVector Velocity { get; set; }
+    public int Id { get; }
     public double Diameter { get; }
     public double Mass { get; }
 
@@ -40,7 +42,7 @@ namespace ConcurrentProgramming.Data
       NewPositionNotification?.Invoke(this, Position);
     }
 
-    internal void Move(Vector newPosition, Vector newVelocity)
+    internal void Move(IVector newPosition, IVector newVelocity)
     {
       PositionBackingField = newPosition;
       Velocity = newVelocity;

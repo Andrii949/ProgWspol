@@ -21,6 +21,7 @@ namespace ConcurrentProgramming.BusinessLogic.Test
     {
       public Data.IVector Position { get; set; } = new VectorFixture(0.0, 0.0);
       public Data.IVector Velocity { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+      public int Id => 0;
       public double Diameter => 20.0;
       public double Mass => 1.0;
 
