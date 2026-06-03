@@ -76,41 +76,41 @@ namespace ConcurrentProgramming.Data.Test
         }
 
         [TestMethod]
-        public void MoveAcceptsAnyVectorImplementationAsVelocityTestMethod()
+        public void BallAcceptsAnyVectorImplementationAsVelocityTestMethod()
         {
-            using (DataImplementation newInstance = new DataImplementation())
+            using (DataImplementation newInstance = new DataImplementation(new TestDiagnosticLogger(), enableMovementTimer: false))
             {
+                Ball? createdBall = null;
                 newInstance.Start(
                   1,
                   (startingPosition, ball) =>
                   {
                       ball.Velocity = new ExternalVector(1.0, 1.0);
+                      createdBall = (Ball)ball;
                   });
 
-                typeof(DataImplementation)
-                  .GetMethod("Move", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                  ?.Invoke(newInstance, new object?[] { null });
+                createdBall?.Move(0.02);
             }
         }
 
         [TestMethod]
-        public void MoveUsesElapsedTimeToUpdatePositionTestMethod()
+        public void BallUsesElapsedTimeToUpdatePositionTestMethod()
         {
             TestDiagnosticLogger logger = new();
-            using (DataImplementation newInstance = new DataImplementation(logger, new FixedElapsedTimeProvider(0.5), startTimer: false))
+            using (DataImplementation newInstance = new DataImplementation(logger, enableMovementTimer: false))
             {
-                IBall? createdBall = null;
+                Ball? createdBall = null;
                 IVector? startingPosition = null;
                 newInstance.Start(
                   1,
                   (position, ball) =>
                   {
                       startingPosition = position;
-                      createdBall = ball;
+                      createdBall = (Ball)ball;
                       ball.Velocity = new ExternalVector(100.0, 0.0);
                   });
 
-                InvokeMove(newInstance);
+                createdBall?.Move(0.5);
 
                 Assert.IsNotNull(createdBall);
                 Assert.IsNotNull(startingPosition);
@@ -123,11 +123,12 @@ namespace ConcurrentProgramming.Data.Test
         public void DiagnosticLoggerReceivesRecordWhenBallMovesTestMethod()
         {
             TestDiagnosticLogger logger = new();
-            using (DataImplementation newInstance = new DataImplementation(logger, new FixedElapsedTimeProvider(0.02), startTimer: false))
+            using (DataImplementation newInstance = new DataImplementation(logger, enableMovementTimer: false))
             {
-                newInstance.Start(1, (position, ball) => { });
+                Ball? createdBall = null;
+                newInstance.Start(1, (position, ball) => createdBall = (Ball)ball);
 
-                InvokeMove(newInstance);
+                createdBall?.Move(0.02);
 
                 Assert.AreEqual(1, logger.Records.Count);
                 Assert.AreEqual(0, logger.DroppedRecords);
@@ -138,24 +139,24 @@ namespace ConcurrentProgramming.Data.Test
         public void FullDiagnosticLoggerDoesNotStopBallMovementTestMethod()
         {
             TestDiagnosticLogger logger = new() { AcceptRecords = false };
-            using (DataImplementation newInstance = new DataImplementation(logger, new FixedElapsedTimeProvider(1.0), startTimer: false))
+            using (DataImplementation newInstance = new DataImplementation(logger, enableMovementTimer: false))
             {
-                IBall? createdBall = null;
+                Ball? createdBall = null;
                 IVector? startingPosition = null;
                 newInstance.Start(
                   1,
                   (position, ball) =>
                   {
                       startingPosition = position;
-                      createdBall = ball;
-                      ball.Velocity = new ExternalVector(10.0, 0.0);
+                      createdBall = (Ball)ball;
+                      ball.Velocity = new ExternalVector(100.0, 0.0);
                   });
 
-                InvokeMove(newInstance);
+                createdBall?.Move(0.02);
 
                 Assert.IsNotNull(createdBall);
                 Assert.IsNotNull(startingPosition);
-                Assert.AreEqual(startingPosition.x + 10.0, createdBall.Position.x, 0.001);
+                Assert.AreEqual(startingPosition.x + 2.0, createdBall.Position.x, 0.001);
                 Assert.AreEqual(1, logger.DroppedRecords);
             }
         }
@@ -195,32 +196,28 @@ namespace ConcurrentProgramming.Data.Test
             }
         }
 
-        private static void InvokeMove(DataImplementation instance)
+        [TestMethod]
+        public async Task SingleSystemTimerMovesMultipleBallsTestMethod()
         {
-            typeof(DataImplementation)
-              .GetMethod("Move", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-              ?.Invoke(instance, new object?[] { null });
+            using DataImplementation newInstance = new(new TestDiagnosticLogger(), enableMovementTimer: true);
+            List<IBall> createdBalls = [];
+            newInstance.Start(
+              3,
+              (position, ball) =>
+              {
+                  ball.Velocity = new ExternalVector(100.0, 0.0);
+                  createdBalls.Add(ball);
+              });
+            double[] startingPositions = createdBalls.Select(ball => ball.Position.x).ToArray();
+
+            await Task.Delay(100);
+
+            Assert.AreEqual(3, createdBalls.Count);
+            for (int i = 0; i < createdBalls.Count; i++)
+                Assert.IsTrue(createdBalls[i].Position.x > startingPositions[i]);
         }
 
         private sealed record ExternalVector(double x, double y) : IVector;
-
-        private sealed class FixedElapsedTimeProvider : IElapsedTimeProvider
-        {
-            private readonly double elapsedSeconds;
-
-            internal FixedElapsedTimeProvider(double elapsedSeconds)
-            {
-                this.elapsedSeconds = elapsedSeconds;
-            }
-
-            public double GetElapsedSeconds()
-            {
-                return elapsedSeconds;
-            }
-
-            public void Reset()
-            { }
-        }
 
         private sealed class TestDiagnosticLogger : IDiagnosticLogger
         {

@@ -9,7 +9,7 @@ namespace ConcurrentProgramming.Data
     {
       Id = id;
       PositionBackingField = initialPosition;
-      Velocity = initialVelocity;
+      VelocityBackingField = initialVelocity;
       Diameter = diameter;
       Mass = mass;
     }
@@ -22,11 +22,32 @@ namespace ConcurrentProgramming.Data
 
     public IVector Position
     {
-      get => PositionBackingField;
-      set => PositionBackingField = value;
+      get
+      {
+        lock (StateLock)
+          return PositionBackingField;
+      }
+      set
+      {
+        lock (StateLock)
+          PositionBackingField = value;
+      }
     }
 
-    public IVector Velocity { get; set; }
+    public IVector Velocity
+    {
+      get
+      {
+        lock (StateLock)
+          return VelocityBackingField;
+      }
+      set
+      {
+        lock (StateLock)
+          VelocityBackingField = value;
+      }
+    }
+
     public int Id { get; }
     public double Diameter { get; }
     public double Mass { get; }
@@ -35,18 +56,25 @@ namespace ConcurrentProgramming.Data
 
     #region private
 
+    private readonly object StateLock = new();
     private IVector PositionBackingField;
+    private IVector VelocityBackingField;
 
-    private void RaiseNewPositionChangeNotification()
+    internal void Move(double elapsedSeconds)
     {
-      NewPositionNotification?.Invoke(this, Position);
-    }
+      if (elapsedSeconds <= 0.0)
+        throw new ArgumentOutOfRangeException(nameof(elapsedSeconds));
 
-    internal void Move(IVector newPosition, IVector newVelocity)
-    {
-      PositionBackingField = newPosition;
-      Velocity = newVelocity;
-      RaiseNewPositionChangeNotification();
+      IVector newPosition;
+      lock (StateLock)
+      {
+        newPosition = new Vector(
+          PositionBackingField.x + VelocityBackingField.x * elapsedSeconds,
+          PositionBackingField.y + VelocityBackingField.y * elapsedSeconds);
+        PositionBackingField = newPosition;
+      }
+
+      NewPositionNotification?.Invoke(this, newPosition);
     }
 
     #endregion private

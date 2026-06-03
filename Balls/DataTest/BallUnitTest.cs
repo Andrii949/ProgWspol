@@ -20,15 +20,28 @@ namespace ConcurrentProgramming.Data.Test
         public void MoveTestMethod()
         {
             Vector initialPosition = new(10.0, 10.0);
-            Ball newInstance = new(1, initialPosition, new Vector(0.0, 0.0), 20.0, 2.0);
-            Vector updatedVelocity = new(1.0, 1.0);
+            Ball newInstance = new(1, initialPosition, new Vector(100.0, 50.0), 20.0, 2.0);
             IVector curentPosition = new Vector(0.0, 0.0);
             int numberOfCallBackCalled = 0;
             newInstance.NewPositionNotification += (sender, position) => { Assert.IsNotNull(sender); curentPosition = position; numberOfCallBackCalled++; };
-            newInstance.Move(new Vector(0.0, 0.0), updatedVelocity);
+
+            newInstance.Move(0.02);
+
             Assert.AreEqual<int>(1, numberOfCallBackCalled);
-            Assert.AreEqual<IVector>(new Vector(0.0, 0.0), curentPosition);
-            Assert.AreEqual<IVector>(updatedVelocity, newInstance.Velocity);
+            Assert.AreEqual(12.0, curentPosition.x, 0.001);
+            Assert.AreEqual(11.0, curentPosition.y, 0.001);
         }
+
+        [TestMethod]
+        public void MoveSynchronizesPositionWithElapsedTimeTestMethod()
+        {
+            Ball newInstance = new(1, new Vector(10.0, 10.0), new Vector(100.0, 0.0), 20.0, 2.0);
+
+            newInstance.Move(0.5);
+
+            Assert.AreEqual(60.0, newInstance.Position.x, 0.001);
+            Assert.AreEqual(10.0, newInstance.Position.y, 0.001);
+        }
+
     }
 }
