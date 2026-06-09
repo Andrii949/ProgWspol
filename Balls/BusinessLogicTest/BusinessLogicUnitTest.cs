@@ -191,6 +191,7 @@ namespace ConcurrentProgramming.BusinessLogic.Test
 
                 public IVector Position { get; set; }
                 public IVector Velocity { get; set; }
+                public string Color => "SteelBlue";
                 public int Id => 0;
                 public double Diameter { get; }
                 public double Mass { get; }
@@ -235,6 +236,7 @@ namespace ConcurrentProgramming.BusinessLogic.Test
 
             public IVector Position { get; set; }
             public IVector Velocity { get; set; }
+            public string Color => "SteelBlue";
             public int Id => 0;
             public double Diameter { get; }
             public double Mass { get; }

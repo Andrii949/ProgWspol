@@ -10,6 +10,7 @@ namespace ConcurrentProgramming.Data
       Id = id;
       PositionBackingField = initialPosition;
       VelocityBackingField = initialVelocity;
+      ColorIndex = id % BallColors.Length;
       Diameter = diameter;
       Mass = mass;
     }
@@ -48,6 +49,15 @@ namespace ConcurrentProgramming.Data
       }
     }
 
+    public string Color
+    {
+      get
+      {
+        lock (StateLock)
+          return BallColors[ColorIndex];
+      }
+    }
+
     public int Id { get; }
     public double Diameter { get; }
     public double Mass { get; }
@@ -57,8 +67,16 @@ namespace ConcurrentProgramming.Data
     #region private
 
     private readonly object StateLock = new();
+    private static readonly string[] BallColors = ["SteelBlue", "Crimson", "DarkOrange", "SeaGreen"];
     private IVector PositionBackingField;
     private IVector VelocityBackingField;
+    private int ColorIndex;
+
+    internal void ChangeColor()
+    {
+      lock (StateLock)
+        ColorIndex = (ColorIndex + 1) % BallColors.Length;
+    }
 
     internal void Move(double elapsedSeconds)
     {

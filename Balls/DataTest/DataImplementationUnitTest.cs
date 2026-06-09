@@ -201,20 +201,50 @@ namespace ConcurrentProgramming.Data.Test
         {
             using DataImplementation newInstance = new(new TestDiagnosticLogger(), enableMovementTimer: true);
             List<IBall> createdBalls = [];
+            List<TaskCompletionSource<IVector>> movementNotifications = [];
             newInstance.Start(
               3,
               (position, ball) =>
               {
+                  TaskCompletionSource<IVector> notification = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                  ball.NewPositionNotification += (sender, newPosition) => notification.TrySetResult(newPosition);
                   ball.Velocity = new ExternalVector(100.0, 0.0);
                   createdBalls.Add(ball);
+                  movementNotifications.Add(notification);
               });
             double[] startingPositions = createdBalls.Select(ball => ball.Position.x).ToArray();
 
-            await Task.Delay(100);
+            await Task.WhenAll(movementNotifications.Select(notification => notification.Task))
+              .WaitAsync(TimeSpan.FromSeconds(1));
 
             Assert.AreEqual(3, createdBalls.Count);
             for (int i = 0; i < createdBalls.Count; i++)
                 Assert.IsTrue(createdBalls[i].Position.x > startingPositions[i]);
+        }
+
+        [TestMethod]
+        public async Task SingleSystemTimerChangesBallColorAfterOneSecondTestMethod()
+        {
+            using DataImplementation newInstance = new(new TestDiagnosticLogger(), enableMovementTimer: true);
+            IBall? createdBall = null;
+            TaskCompletionSource<string> colorChanged = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            newInstance.Start(
+              1,
+              (position, ball) =>
+              {
+                  createdBall = ball;
+                  string initialColor = ball.Color;
+                  ball.NewPositionNotification += (sender, newPosition) =>
+                  {
+                      if (ball.Color != initialColor)
+                          colorChanged.TrySetResult(ball.Color);
+                  };
+              });
+
+            string changedColor = await colorChanged.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+            Assert.IsNotNull(createdBall);
+            Assert.AreNotEqual("SteelBlue", changedColor);
         }
 
         private sealed record ExternalVector(double x, double y) : IVector;

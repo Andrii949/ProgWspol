@@ -13,6 +13,8 @@ namespace ConcurrentProgramming.BusinessLogic
 
     public event EventHandler<IPosition>? NewPositionNotification;
 
+    public string Color => UnderneathBall.Color;
+
     #endregion IBall
 
     #region private

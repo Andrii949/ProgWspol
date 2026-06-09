@@ -13,6 +13,7 @@ namespace ConcurrentProgramming.Presentation.Model.Test
       Assert.AreEqual<double>(0.0, ball.Top);
       Assert.AreEqual<double>(0.0, ball.Top);
       Assert.AreEqual<double>(20.0, ball.Diameter);
+      Assert.AreEqual("SteelBlue", ball.Color);
     }
 
     [TestMethod]
@@ -36,6 +37,7 @@ namespace ConcurrentProgramming.Presentation.Model.Test
 
     private class BusinessLogicIBallFixture : BusinessLogic.IBall
     {
+      public string Color => "SteelBlue";
       public event EventHandler<IPosition>? NewPositionNotification;
     }
 

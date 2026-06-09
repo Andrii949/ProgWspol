@@ -10,9 +10,11 @@ namespace ConcurrentProgramming.Presentation.Model
     {
         public ModelBall(double top, double left, double diameter, LogicIBall underneathBall, double scaleFactor = 1.0)
         {
+            UnderneathBall = underneathBall;
             rawTop = top;
             rawLeft = left;
             rawDiameter = diameter;
+            Color = UnderneathBall.Color;
             ApplyScale(scaleFactor);
             underneathBall.NewPositionNotification += NewPositionNotification;
         }
@@ -55,6 +57,18 @@ namespace ConcurrentProgramming.Presentation.Model
             }
         }
 
+        public string Color
+        {
+            get { return ColorBackingField; }
+            private set
+            {
+                if (ColorBackingField == value)
+                    return;
+                ColorBackingField = value;
+                RaisePropertyChanged();
+            }
+        }
+
         #region INotifyPropertyChanged
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -68,15 +82,18 @@ namespace ConcurrentProgramming.Presentation.Model
         private double TopBackingField;
         private double LeftBackingField;
         private double DiameterBackingField;
+        private string ColorBackingField;
         private double currentScaleFactor = 1.0;
         private double rawTop;
         private double rawLeft;
         private double rawDiameter;
+        private readonly LogicIBall UnderneathBall;
 
         private void NewPositionNotification(object sender, IPosition e)
         {
             rawTop = e.y;
             rawLeft = e.x;
+            Color = UnderneathBall.Color;
             ApplyScale(currentScaleFactor);
         }
 

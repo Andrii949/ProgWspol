@@ -58,7 +58,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Ellipse Width="{Binding Diameter}" Height="{Binding Diameter}" Fill="SteelBlue" />
+                            <Ellipse Width="{Binding Diameter}" Height="{Binding Diameter}" Fill="{Binding Color}" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                     <ItemsControl.ItemContainerStyle>

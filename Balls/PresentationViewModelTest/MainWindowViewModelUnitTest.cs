@@ -216,6 +216,8 @@ namespace ConcurrentProgramming.Presentation.ViewModel.Test
 
                 public double Left => 0.0;
 
+                public string Color => "SteelBlue";
+
                 #region INotifyPropertyChanged
 
                 public event PropertyChangedEventHandler? PropertyChanged;

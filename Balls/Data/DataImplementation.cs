@@ -18,7 +18,7 @@ namespace ConcurrentProgramming.Data
         {
             DiagnosticLogger = diagnosticLogger ?? throw new ArgumentNullException(nameof(diagnosticLogger));
             EnableMovementTimer = enableMovementTimer;
-            MovementTimer = new System.Timers.Timer(MovementIntervalMilliseconds)
+            MovementTimer = new System.Timers.Timer(MovementTimerPeriod.TotalMilliseconds)
             {
                 AutoReset = true
             };
@@ -56,6 +56,7 @@ namespace ConcurrentProgramming.Data
                     }
                 }
                 LastMovementTime = DateTime.Now;
+                LastColorChangeTime = LastMovementTime;
                 if (EnableMovementTimer)
                     MovementTimer.Start();
             }
@@ -119,12 +120,14 @@ namespace ConcurrentProgramming.Data
         private readonly bool EnableMovementTimer;
         private readonly System.Timers.Timer MovementTimer;
         private DateTime LastMovementTime;
+        private DateTime LastColorChangeTime;
 
         internal const double BallDiameter = 20.0;
         internal const double BallMass = 1.0;
-        internal const double MovementIntervalMilliseconds = 20.0;
         internal const double TableHeight = 420.0;
         internal const double TableWidth = 700.0;
+        private static readonly TimeSpan MovementTimerPeriod = TimeSpan.FromMilliseconds(20.0);
+        private static readonly TimeSpan ColorChangePeriod = TimeSpan.FromSeconds(1.0);
 
         private void ClearBalls()
         {
@@ -162,12 +165,22 @@ namespace ConcurrentProgramming.Data
                 LastMovementTime = e.SignalTime;
                 if (elapsedSeconds <= 0.0)
                     return;
+                bool changeColor = e.SignalTime - LastColorChangeTime >= ColorChangePeriod;
+                if (changeColor)
+                    LastColorChangeTime = e.SignalTime;
 
                 Ball[] ballsSnapshot;
                 lock (BallsLock)
                     ballsSnapshot = BallsList.ToArray();
 
-                Parallel.ForEach(ballsSnapshot, ball => ball.Move(elapsedSeconds));
+                Parallel.ForEach(
+                  ballsSnapshot,
+                  ball =>
+                  {
+                      if (changeColor)
+                          ball.ChangeColor();
+                      ball.Move(elapsedSeconds);
+                  });
             }
         }
 

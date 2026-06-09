@@ -45,6 +45,7 @@ namespace ConcurrentProgramming.Data
 
     IVector Position { get; set; }
     IVector Velocity { get; set; }
+    string Color { get; }
     int Id { get; }
     double Diameter { get; }
     double Mass { get; }

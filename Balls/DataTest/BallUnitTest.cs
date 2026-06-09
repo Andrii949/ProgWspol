@@ -12,6 +12,7 @@ namespace ConcurrentProgramming.Data.Test
             Assert.AreEqual(1, newInstance.Id);
             Assert.AreEqual(testinVector, newInstance.Position);
             Assert.AreEqual(testinVector, newInstance.Velocity);
+            Assert.AreEqual("Crimson", newInstance.Color);
             Assert.AreEqual(20.0, newInstance.Diameter);
             Assert.AreEqual(2.0, newInstance.Mass);
         }
@@ -41,6 +42,17 @@ namespace ConcurrentProgramming.Data.Test
 
             Assert.AreEqual(60.0, newInstance.Position.x, 0.001);
             Assert.AreEqual(10.0, newInstance.Position.y, 0.001);
+        }
+
+        [TestMethod]
+        public void ChangeColorTestMethod()
+        {
+            Ball newInstance = new(0, new Vector(0.0, 0.0), new Vector(0.0, 0.0), 20.0, 2.0);
+            Assert.AreEqual("SteelBlue", newInstance.Color);
+
+            newInstance.ChangeColor();
+
+            Assert.AreEqual("Crimson", newInstance.Color);
         }
 
     }

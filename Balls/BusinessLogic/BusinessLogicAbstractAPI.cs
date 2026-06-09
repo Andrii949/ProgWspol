@@ -44,5 +44,6 @@ namespace ConcurrentProgramming.BusinessLogic
     public interface IBall
     {
         event EventHandler<IPosition> NewPositionNotification;
+        string Color { get; }
     }
 }
