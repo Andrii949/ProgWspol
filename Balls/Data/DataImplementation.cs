@@ -173,15 +173,23 @@ namespace ConcurrentProgramming.Data
                 lock (BallsLock)
                     ballsSnapshot = BallsList.ToArray();
 
-                Parallel.ForEach(
-                  ballsSnapshot,
-                  ball =>
+                UpdateBalls(ballsSnapshot, elapsedSeconds, changeColor);
+            }
+        }
+
+        private void UpdateBalls(IEnumerable<Ball> balls, double elapsedSeconds, bool changeColor)
+        {
+            Parallel.ForEach(
+              balls,
+              ball =>
+              {
+                  lock (ball)
                   {
                       if (changeColor)
                           ball.ChangeColor();
                       ball.Move(elapsedSeconds);
-                  });
-            }
+                  }
+              });
         }
 
         private Vector CreateVelocity()
